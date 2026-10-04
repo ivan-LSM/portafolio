@@ -1,0 +1,158 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Hero from '../../components/Hero.astro';
+import Section from '../../components/Section.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+import TechIcon from '../../components/TechIcon.astro';
+import Game from '../../game/ui/Game.svelte';
+import { CATEGORIES } from '../../data/categories';
+import { EMAIL, GITHUB_URL, LINKEDIN_URL } from '../../config';
+import { STACK } from '../../data/stack';
+import { getProjects } from '../../lib/projects';
+import { LOCALES, isLang, t, type Lang, type TKey } from '../../i18n/utils';
+
+export function getStaticPaths() {
+  return LOCALES.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+if (!isLang(lang)) throw new Error(`Invalid lang: ${lang}`);
+
+const projects = await getProjects(lang);
+const present = CATEGORIES.filter((c) => projects.some((p) => p.data.category === c));
+
+const experience = [
+  {
+    role: 'exp.lota.role',
+    org: 'exp.lota.org',
+    period: 'exp.lota.period',
+    bullets: ['exp.lota.b1', 'exp.lota.b2', 'exp.lota.b3', 'exp.lota.b4'],
+  },
+  {
+    role: 'exp.freelance.role',
+    org: 'exp.freelance.org',
+    period: 'exp.freelance.period',
+    bullets: ['exp.freelance.b1', 'exp.freelance.b2'],
+  },
+] satisfies { role: TKey; org: TKey; period: TKey; bullets: TKey[] }[];
+---
+
+<BaseLayout lang={lang} title={t(lang, 'hero.role')}>
+  <Hero lang={lang} />
+
+  <Section id="about" title={t(lang, 'about.title')} alt>
+    <div class="grid gap-8 md:grid-cols-[2fr_1fr]">
+      <p class="m-0 max-w-prose">{t(lang, 'about.summary')}</p>
+      <dl class="px-border m-3 grid content-start gap-3 bg-[var(--surface)] p-5">
+        <div>
+          <dt class="font-pixel text-sm text-[var(--cyan)]">{t(lang, 'about.label.degree')}</dt>
+          <dd class="m-0">{t(lang, 'about.degree')}</dd>
+        </div>
+        <div>
+          <dt class="font-pixel text-sm text-[var(--cyan)]">{t(lang, 'about.label.languages')}</dt>
+          <dd class="m-0">{t(lang, 'about.languages')}</dd>
+        </div>
+      </dl>
+    </div>
+  </Section>
+
+  <Section id="projects" title={t(lang, 'projects.title')}>
+    <p class="mt-0 mb-6 text-[var(--muted)]">{t(lang, 'projects.intro')}</p>
+    <div id="project-filters" role="group" aria-label={t(lang, 'projects.filter.label')} class="mb-8 flex flex-wrap gap-3" hidden>
+      <button type="button" class="px-btn px-btn-sm chip" data-filter="all" aria-pressed="true">
+        {t(lang, 'projects.filter.all')}
+      </button>
+      {
+        present.map((c) => (
+          <button type="button" class="px-btn px-btn-sm chip" data-filter={c} aria-pressed="false">
+            {t(lang, `category.${c}`)}
+          </button>
+        ))
+      }
+    </div>
+    <ul id="project-grid" class="m-0 grid list-none gap-8 p-0 sm:grid-cols-2 lg:grid-cols-3">
+      {projects.map((p) => <li class="flex" data-category={p.data.category}><ProjectCard project={p} lang={lang} /></li>)}
+    </ul>
+  </Section>
+
+  <Section id="experience" title={t(lang, 'experience.title')} alt>
+    <ol class="m-0 grid list-none gap-10 p-0">
+      {
+        experience.map((e) => (
+          <li class="timeline">
+            <span class="timeline-dot" aria-hidden="true" />
+            <h3 class="m-0 text-2xl">{t(lang, e.role)}</h3>
+            <p class="m-0 mt-1 text-[var(--muted)]">{t(lang, e.org)}</p>
+            <p class="m-0 font-pixel text-[var(--cyan)]">{t(lang, e.period)}</p>
+            <ul class="mt-3 max-w-3xl pl-5">
+              {e.bullets.map((b) => <li class="mb-1">{t(lang, b)}</li>)}
+            </ul>
+          </li>
+        ))
+      }
+    </ol>
+  </Section>
+
+  <Section id="stack" title={t(lang, 'stack.title')}>
+    <div class="grid gap-10">
+      {
+        STACK.map((g) => (
+          <div>
+            <h3 class="m-0 mb-4 text-xl text-[var(--yellow)]">{t(lang, g.titleKey)}</h3>
+            <ul class="m-0 grid list-none grid-cols-3 gap-4 p-0 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+              {g.items.map((i) => (
+                <li class="px-border tech-tile">
+                  <TechIcon name={i} size={28} />
+                  <span>{i}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </Section>
+
+  <Section id="game" title={t(lang, 'game.title')} alt>
+    <Game client:visible lang={lang} />
+  </Section>
+
+  <Section id="contact" title={t(lang, 'contact.title')}>
+    <p class="mt-0 max-w-xl text-[var(--muted)]">{t(lang, 'contact.intro')}</p>
+    <p class="mb-6">
+      <span class="font-pixel text-[var(--cyan)]">{t(lang, 'contact.email')}:</span>
+      <strong class="break-all">{EMAIL}</strong>
+    </p>
+    <div class="flex flex-wrap gap-4">
+      <a class="px-btn px-btn-primary" href={`mailto:${EMAIL}`}>{t(lang, 'contact.send')}</a>
+      <a class="px-btn" href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
+        {t(lang, 'contact.github')}<span class="sr-only-text">{t(lang, 'common.external')}</span>
+      </a>
+      {
+        LINKEDIN_URL && (
+          <a class="px-btn" href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">
+            {t(lang, 'contact.linkedin')}<span class="sr-only-text">{t(lang, 'common.external')}</span>
+          </a>
+        )
+      }
+    </div>
+  </Section>
+</BaseLayout>
+
+<script>
+  const bar = document.getElementById('project-filters');
+  const items = document.querySelectorAll<HTMLElement>('#project-grid > li');
+  if (bar) {
+    bar.hidden = false;
+    const chips = bar.querySelectorAll<HTMLButtonElement>('button[data-filter]');
+    chips.forEach((chip) =>
+      chip.addEventListener('click', () => {
+        const f = chip.dataset.filter;
+        chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+        items.forEach((li) => {
+          li.hidden = f !== 'all' && li.dataset.category !== f;
+        });
+      }),
+    );
+  }
+</script>

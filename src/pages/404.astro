@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PixelButton from '../components/PixelButton.astro';
+import { localePath, t, type Lang } from '../i18n/utils';
+
+// El 404 es único (GitHub Pages sirve /404.html): se muestra en ambos idiomas.
+const langs: Lang[] = ['es', 'en'];
+---
+
+<BaseLayout lang="es" title="404" chrome={false} alternates={false} noindex>
+  <section class="container-px grid min-h-[80dvh] place-content-center gap-10 py-16 text-center">
+    <p class="m-0 font-pixel text-8xl text-[var(--red)] sm:text-9xl" aria-hidden="true">404</p>
+    {
+      langs.map((l) => (
+        <div lang={l}>
+          <h1 class="m-0 text-3xl sm:text-4xl">{t(l, 'notfound.title')}</h1>
+          <p class="mx-auto mt-3 max-w-md text-[var(--muted)]">{t(l, 'notfound.text')}</p>
+          <PixelButton href={localePath(l)} lang={l} variant={l === 'es' ? 'primary' : 'default'}>
+            {t(l, 'notfound.home')}
+          </PixelButton>
+        </div>
+      ))
+    }
+  </section>
+</BaseLayout>

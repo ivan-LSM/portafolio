@@ -1,0 +1,61 @@
+---
+import { localePath, otherLang, swapLangPath, t, type Lang } from '../i18n/utils';
+import ThemeToggle from './ThemeToggle.astro';
+import SoundToggle from './SoundToggle.astro';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const other = otherLang(lang);
+const switchHref = swapLangPath(Astro.url.pathname, other);
+const home = localePath(lang);
+const links = [
+  ['about', 'nav.about'],
+  ['projects', 'nav.projects'],
+  ['experience', 'nav.experience'],
+  ['stack', 'nav.stack'],
+  ['game', 'nav.game'],
+  ['contact', 'nav.contact'],
+] as const;
+---
+
+<header class="sticky top-0 z-50 border-b-4 border-[var(--border)] bg-[var(--bg)]">
+  <div class="container-px flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
+    <a
+      href={home}
+      class="font-pixel text-2xl font-bold tracking-wider text-[var(--text)] no-underline"
+      aria-label="Iván Salas"
+    >
+      IVÁN<span class="text-[var(--cyan)]">.</span>SALAS
+    </a>
+
+    <nav aria-label={t(lang, 'nav.label')} class="order-3 w-full lg:order-none lg:w-auto">
+      <ul class="m-0 flex list-none flex-wrap gap-x-5 gap-y-1 p-0 font-pixel text-lg">
+        {
+          links.map(([id, key]) => (
+            <li>
+              <a href={`${home}#${id}`} class="text-[var(--muted)] no-underline hover:text-[var(--text)] hover:underline">
+                {t(lang, key)}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="flex items-center gap-2">
+      <a
+        href={switchHref}
+        hreflang={other}
+        lang={other}
+        class="px-btn px-btn-sm"
+        aria-label={t(lang, 'lang.switch')}
+      >
+        {t(lang, 'lang.short')}
+      </a>
+      <SoundToggle lang={lang} />
+      <ThemeToggle lang={lang} />
+    </div>
+  </div>
+</header>

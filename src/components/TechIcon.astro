@@ -1,0 +1,30 @@
+---
+import { getTechIcon } from '../data/techIcons';
+
+interface Props {
+  name: string;
+  size?: number;
+}
+const { name, size = 24 } = Astro.props;
+const icon = getTechIcon(name);
+const cls = ['tech-icon', icon.darkBad && 'ti-dark-bad', icon.lightBad && 'ti-light-bad'].filter(Boolean).join(' ');
+---
+
+{
+  icon.svgPath ? (
+    <svg
+      class={cls}
+      style={`--brand:${icon.hex};width:${size}px;height:${size}px`}
+      viewBox="0 0 24 24"
+      role="img"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d={icon.svgPath} />
+    </svg>
+  ) : (
+    <span class="tech-mono" style={`width:${size}px;height:${size}px;font-size:${Math.round(size * 0.46)}px`} aria-hidden="true">
+      {icon.mono}
+    </span>
+  )
+}

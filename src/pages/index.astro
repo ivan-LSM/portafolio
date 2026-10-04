@@ -1,0 +1,25 @@
+---
+// Raíz: redirección estática-segura a /es/ (o /en/ según el idioma del navegador).
+import { localePath, withBase } from '../i18n/utils';
+const target = new URL(localePath('es'), Astro.site).href;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Iván Salas</title>
+    <meta http-equiv="refresh" content={`0; url=${localePath('es')}`} />
+    <link rel="canonical" href={target} />
+    <link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
+    <meta name="robots" content="noindex" />
+    <script is:inline define:vars={{ enHref: localePath('en') }}>
+      var lang = (navigator.language || 'es').toLowerCase();
+      if (lang.indexOf('es') !== 0) location.replace(enHref);
+    </script>
+  </head>
+  <body style="background:#1a1c2c;color:#f4f4f4;font-family:system-ui,sans-serif;padding:2rem">
+    <p><a href={localePath('es')} style="color:#41a6f6">Español</a> · <a href={localePath('en')} style="color:#41a6f6">English</a></p>
+  </body>
+</html>

@@ -1,0 +1,15 @@
+---
+interface Props {
+  id: string;
+  title: string;
+  alt?: boolean;
+}
+const { id, title, alt = false } = Astro.props;
+---
+
+<section id={id} aria-labelledby={`${id}-title`} class={`py-16 sm:py-20 ${alt ? 'bg-[var(--bg-alt)]' : ''}`}>
+  <div class="container-px">
+    <h2 id={`${id}-title`} class="section-title mb-8">{title}</h2>
+    <slot />
+  </div>
+</section>

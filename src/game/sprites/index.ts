@@ -1,0 +1,40 @@
+export { PALETTE, type SpriteDef } from './gen';
+export {
+  CHARACTER,
+  CHAR_FRAMES,
+  CHAR_W,
+  CHAR_H,
+  CHAR_CX,
+  CHAR_DESK_ROW,
+  getCharacter,
+  getCharacterSheet,
+  type CharFrame,
+} from './character';
+export { ICONS, UI_ICONS, type IconId } from './icons';
+export {
+  BACK,
+  BARREL_BIG,
+  BARREL_MUG,
+  BOTTLE,
+  CHAIR,
+  CLIFF,
+  DESK,
+  DESK_SURFACE_H,
+  ENVELOPE,
+  ROUTER,
+  KEYBOARD,
+  LAMP,
+  LAMP_GLOW,
+  LAYOUT,
+  MAT,
+  MOUSE,
+  MUG,
+  PERFUME,
+  PLANT,
+  SCENE_H,
+  SCENE_PALETTE,
+  SCENE_W,
+  SPEAKER,
+  STEAM,
+} from './scene';
+export { GO_GLYPH, POSTERS, POSTER_H, POSTER_IDS, POSTER_W, type PosterId } from './posters';

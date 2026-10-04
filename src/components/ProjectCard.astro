@@ -1,0 +1,48 @@
+---
+import type { Project } from '../lib/projects';
+import { Image } from 'astro:assets';
+import TechIcon from './TechIcon.astro';
+import { localePath, t, type Lang } from '../i18n/utils';
+
+interface Props {
+  project: Project;
+  lang: Lang;
+}
+const { project, lang } = Astro.props;
+const { data } = project;
+const href = localePath(lang, `proyectos/${project.slug}`);
+---
+
+<article class="px-border px-card is-link relative flex flex-col gap-4 p-6" data-category={data.category}>
+  {
+    data.cover && (
+      <div class="px-border overflow-hidden bg-[var(--surface-2)]">
+        <Image
+          src={data.cover}
+          alt={data.coverAlt ?? ''}
+          widths={[320, 480, 640]}
+          sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw"
+          loading="lazy"
+          decoding="async"
+          class="block aspect-video h-auto w-full object-cover"
+        />
+      </div>
+    )
+  }
+  <div class="flex flex-wrap items-center gap-1">
+    <span class="px-badge">{t(lang, `category.${data.category}`)}</span>
+    {data.status === 'in-progress' && <span class="px-badge px-badge-warn">{t(lang, 'status.in-progress')}</span>}
+  </div>
+  <h3 class="m-0 text-2xl">
+    <a href={href} class="text-[var(--text)] no-underline after:absolute after:inset-0 after:content-['']">
+      {data.title}
+    </a>
+  </h3>
+  <p class="m-0 text-[var(--muted)]">{data.summary}</p>
+  <p class="m-0 font-pixel text-sm text-[var(--cyan)]">{data.period}</p>
+  <ul class="m-0 mt-auto flex list-none flex-wrap gap-1 p-0">
+    {data.stack.slice(0, 5).map((s) => <li class="px-badge badge-tech"><TechIcon name={s} size={14} />{s}</li>)}
+    {data.stack.length > 5 && <li class="px-badge">+{data.stack.length - 5}</li>}
+  </ul>
+  <span class="font-pixel text-[var(--accent)]" aria-hidden="true">{t(lang, 'project.details')} →</span>
+</article>

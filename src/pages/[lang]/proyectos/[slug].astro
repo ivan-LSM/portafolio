@@ -1,0 +1,121 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import TechIcon from '../../../components/TechIcon.astro';
+import ProjectGallery from '../../../components/ProjectGallery.astro';
+import PixelButton from '../../../components/PixelButton.astro';
+import RepoStats from '../../../components/RepoStats.astro';
+import { getProjects } from '../../../lib/projects';
+import { LOCALES, isLang, localePath, t, type Lang } from '../../../i18n/utils';
+
+export async function getStaticPaths() {
+  const paths = [];
+  for (const lang of LOCALES) {
+    for (const project of await getProjects(lang)) {
+      paths.push({ params: { lang, slug: project.slug }, props: { project } });
+    }
+  }
+  return paths;
+}
+
+const lang = Astro.params.lang as Lang;
+if (!isLang(lang)) throw new Error(`Invalid lang: ${lang}`);
+const { project } = Astro.props;
+const { data } = project;
+const projectsHref = `${localePath(lang)}#projects`;
+---
+
+<BaseLayout lang={lang} title={data.title} description={data.summary} ogImage={`/og/${project.slug}-${lang}.png`}>
+  <article class="container-px py-12 sm:py-16">
+    <a href={projectsHref} class="font-pixel text-lg">← {t(lang, 'project.back')}</a>
+
+    <header class="mt-6">
+      <div class="flex flex-wrap items-center gap-1">
+        <span class="px-badge">{t(lang, `category.${data.category}`)}</span>
+        {data.status === 'in-progress' && <span class="px-badge px-badge-warn">{t(lang, 'status.in-progress')}</span>}
+        {data.contributors.length > 0 && <span class="px-badge">{t(lang, 'project.team')}</span>}
+      </div>
+      <h1 class="mb-3 mt-4 text-4xl sm:text-6xl">{data.title}</h1>
+      <p class="m-0 max-w-3xl text-xl text-[var(--muted)]">{data.summary}</p>
+    </header>
+
+    <dl class="px-border m-3 mt-10 grid gap-4 bg-[var(--surface)] p-6 sm:grid-cols-3">
+      <div>
+        <dt class="font-pixel text-sm text-[var(--cyan)]">{t(lang, 'project.role')}</dt>
+        <dd class="m-0">{data.role}</dd>
+      </div>
+      <div>
+        <dt class="font-pixel text-sm text-[var(--cyan)]">{t(lang, 'project.period')}</dt>
+        <dd class="m-0">{data.period}</dd>
+      </div>
+      <div>
+        <dt class="font-pixel text-sm text-[var(--cyan)]">{t(lang, 'project.status')}</dt>
+        <dd class="m-0">{t(lang, `status.${data.status}`)}</dd>
+      </div>
+    </dl>
+
+    <div class="mt-12 grid gap-12 lg:grid-cols-[3fr_2fr]">
+      <section aria-labelledby="hl">
+        <h2 id="hl" class="mb-4 text-2xl text-[var(--yellow)]">{t(lang, 'project.highlights')}</h2>
+        <ul class="m-0 grid list-none gap-3 p-0">
+          {
+            data.highlights.map((h) => (
+              <li class="relative pl-7 before:absolute before:left-0 before:top-[0.6em] before:h-2.5 before:w-2.5 before:bg-[var(--green)] before:content-['']">
+                {h}
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+      <section aria-labelledby="st">
+        <h2 id="st" class="mb-4 text-2xl text-[var(--yellow)]">{t(lang, 'project.stack')}</h2>
+        <ul class="m-0 flex list-none flex-wrap gap-1 p-0">
+          {data.stack.map((s) => <li class="px-badge badge-tech"><TechIcon name={s} size={16} />{s}</li>)}
+        </ul>
+        {
+          data.contributors.length > 0 && (
+            <p class="mt-6 mb-0">
+              {t(lang, 'project.team.with')}{' '}
+              {data.contributors.map((c, i) => (
+                <>
+                  {i > 0 && ', '}
+                  <a href={c.url} target="_blank" rel="noopener noreferrer">
+                    @{c.name}
+                  </a>
+                </>
+              ))}
+            </p>
+          )
+        }
+        <RepoStats repo={data.repo} lang={lang} />
+        <div class="mt-8">
+          {
+            data.repo ? (
+              <PixelButton href={data.repo} lang={lang} variant="primary" external>
+                {t(lang, 'project.repo')}
+              </PixelButton>
+            ) : (
+              <p class="px-badge m-0">{t(lang, 'project.repo.private')}</p>
+            )
+          }
+        </div>
+      </section>
+    </div>
+
+    <section aria-labelledby="shots" class="mt-16">
+      <h2 id="shots" class="mb-4 text-2xl text-[var(--yellow)]">{t(lang, 'project.screenshots')}</h2>
+      {
+        data.gallery.length > 0 ? (
+          <ProjectGallery items={data.gallery} lang={lang} />
+        ) : (
+          <div
+            role="img"
+            aria-label={t(lang, 'project.screenshot.alt')}
+            class="px-border game-panel m-3 grid aspect-video place-items-center p-6 text-center text-[var(--muted)]"
+          >
+            <p class="m-0 font-pixel text-xl">{t(lang, 'project.screenshots.soon')}</p>
+          </div>
+        )
+      }
+    </section>
+  </article>
+</BaseLayout>

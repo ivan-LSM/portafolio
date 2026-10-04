@@ -1,0 +1,61 @@
+---
+import { t, type Lang } from '../i18n/utils';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+---
+
+<button
+  type="button"
+  class="px-btn px-btn-sm"
+  id="sound-toggle"
+  data-no-tap
+  aria-pressed="true"
+  aria-label={t(lang, 'sound.toggle')}
+  data-label-on={t(lang, 'sound.on')}
+  data-label-off={t(lang, 'sound.off')}
+  title={t(lang, 'sound.on')}
+>
+  <svg class="px" width="20" height="20" viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true" fill="currentColor">
+    <!-- altavoz -->
+    <path d="M0 3h2V2h1V1h1v6H3V6H2V5H0z"></path>
+    <!-- ondas (sonido activado) -->
+    <g class="sound-waves">
+      <path d="M5 3h1v2H5zM6 2h1v4H6zM7 1h1v1H7zM7 6h1v1H7z"></path>
+    </g>
+    <!-- cruz (silenciado) -->
+    <g class="sound-x" style="display:none">
+      <path d="M5 2h1v1H5zM7 2h1v1H7zM6 3h1v1H6zM5 4h1v1H5zM7 4h1v1H7z"></path>
+    </g>
+  </svg>
+</button>
+
+<script>
+  import { sfx } from '../lib/sfx';
+  import { initUiTapSounds } from '../lib/uiSounds';
+
+  initUiTapSounds();
+
+  const btn = document.getElementById('sound-toggle') as HTMLButtonElement | null;
+  if (btn) {
+    const waves = btn.querySelector<SVGElement>('.sound-waves');
+    const cross = btn.querySelector<SVGElement>('.sound-x');
+    const render = (muted: boolean) => {
+      btn.setAttribute('aria-pressed', String(!muted));
+      const label = muted ? btn.dataset.labelOff : btn.dataset.labelOn;
+      if (label) btn.title = label;
+      if (waves) waves.style.display = muted ? 'none' : '';
+      if (cross) cross.style.display = muted ? '' : 'none';
+      btn.style.opacity = muted ? '0.75' : '';
+    };
+    render(sfx.isMuted());
+    sfx.subscribe(render);
+    btn.addEventListener('click', () => {
+      sfx.unlock();
+      const muted = sfx.toggleMuted();
+      if (!muted) sfx.play('uiTap');
+    });
+  }
+</script>

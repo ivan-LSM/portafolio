@@ -1,0 +1,131 @@
+---
+import { Image, getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import { t, type Lang } from '../i18n/utils';
+
+interface Item {
+  src: ImageMetadata;
+  thumb?: ImageMetadata;
+  animated: boolean;
+  alt: string;
+}
+interface Props {
+  items: Item[];
+  lang: Lang;
+}
+const { items, lang } = Astro.props;
+
+// Las imágenes animadas se sirven tal cual (sin reprocesar) para conservar la animación.
+const full = await Promise.all(
+  items.map(async (it) => (it.animated ? it.src.src : (await getImage({ src: it.src, width: 1600, format: 'webp' })).src)),
+);
+---
+
+<div class="project-gallery" data-gallery>
+  <ul class="m-3 grid list-none gap-4 p-0 sm:grid-cols-2">
+    {
+      items.map((it, i) => (
+        <li>
+          <button
+            type="button"
+            class="px-border block w-full cursor-zoom-in overflow-hidden bg-[var(--surface)] p-0"
+            data-full={full[i]}
+            data-alt={it.alt}
+            aria-label={`${t(lang, 'project.gallery.open')}: ${it.alt}`}
+          >
+            <Image
+              src={it.thumb ?? it.src}
+              alt={it.alt}
+              widths={[420, 640, 840]}
+              sizes="(min-width: 640px) 45vw, 90vw"
+              loading="lazy"
+              decoding="async"
+              class="block h-auto w-full"
+            />
+          </button>
+        </li>
+      ))
+    }
+  </ul>
+
+  <dialog class="gallery-dialog px-border" aria-label={t(lang, 'project.screenshots')}>
+    <div class="gallery-dialog-bar">
+      <button type="button" class="px-btn px-btn-sm" data-prev>← {t(lang, 'project.gallery.prev')}</button>
+      <button type="button" class="px-btn px-btn-sm" data-next>{t(lang, 'project.gallery.next')} →</button>
+      <button type="button" class="px-btn px-btn-sm ml-auto" data-close>{t(lang, 'project.gallery.close')}</button>
+    </div>
+    <img alt="" class="gallery-dialog-img" />
+    <p class="gallery-dialog-caption" aria-live="polite"></p>
+  </dialog>
+</div>
+
+<style is:global>
+  .gallery-dialog {
+    max-width: min(96vw, 1000px);
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--bg-alt);
+    color: var(--text);
+  }
+  .gallery-dialog::backdrop {
+    background: rgb(15 16 27 / 0.85);
+  }
+  .gallery-dialog-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .gallery-dialog-img {
+    display: block;
+    width: 100%;
+    max-height: 75vh;
+    object-fit: contain;
+    background: #000;
+  }
+  .gallery-dialog-caption {
+    margin: 0.75rem 0 0;
+    color: var(--muted);
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-gallery]').forEach((root) => {
+    const dialog = root.querySelector('dialog')!;
+    const img = dialog.querySelector<HTMLImageElement>('.gallery-dialog-img')!;
+    const caption = dialog.querySelector<HTMLElement>('.gallery-dialog-caption')!;
+    const triggers = [...root.querySelectorAll<HTMLButtonElement>('button[data-full]')];
+    let index = 0;
+    let opener: HTMLElement | null = null;
+
+    const show = (i: number) => {
+      index = (i + triggers.length) % triggers.length;
+      const b = triggers[index];
+      img.src = b.dataset.full ?? '';
+      img.alt = b.dataset.alt ?? '';
+      caption.textContent = b.dataset.alt ?? '';
+    };
+    triggers.forEach((b, i) =>
+      b.addEventListener('click', () => {
+        opener = b;
+        show(i);
+        dialog.showModal();
+        dialog.querySelector<HTMLElement>('[data-close]')?.focus();
+      }),
+    );
+    dialog.querySelector('[data-prev]')!.addEventListener('click', () => show(index - 1));
+    dialog.querySelector('[data-next]')!.addEventListener('click', () => show(index + 1));
+    dialog.querySelector('[data-close]')!.addEventListener('click', () => dialog.close());
+    // Clic en el fondo cierra
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') show(index - 1);
+      else if (e.key === 'ArrowRight') show(index + 1);
+    });
+    dialog.addEventListener('close', () => {
+      img.removeAttribute('src');
+      opener?.focus();
+    });
+  });
+</script>

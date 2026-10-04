@@ -1,0 +1,24 @@
+node_modules/
+dist/
+.astro/
+.env
+.env.*
+.DS_Store
+*.log
+# PDF original en la raíz (la copia publicada vive en public/cv/)
+cv_ivan_salas.pdf
+/*.pdf
+
+# Fotos de referencia para el personaje (privadas, no se publican)
+fotos/
+
+# Borradores de READMEs de otros repos (contienen diffs con datos del cliente; solo locales)
+docs/readmes-drafts/
+
+# notas locales del proyecto (nunca se publican)
+CLAUDE.md
+
+# Archivos solo locales (no van al repo publico)
+CREDITS.md
+README.md
+docs/

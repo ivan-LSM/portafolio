@@ -1,0 +1,134 @@
+---
+import '@fontsource/pixelify-sans/400.css';
+import '@fontsource/pixelify-sans/600.css';
+import '@fontsource/pixelify-sans/700.css';
+import '@fontsource-variable/inter';
+import pixelify700 from '@fontsource/pixelify-sans/files/pixelify-sans-latin-700-normal.woff2?url';
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { NAME, EMAIL, GITHUB_URL, LINKEDIN_URL } from '../config';
+import { LOCALES, OG_LOCALE, localePath, otherLang, swapLangPath, t, withBase, type Lang } from '../i18n/utils';
+
+interface Props {
+  lang: Lang;
+  title?: string;
+  description?: string;
+  /** Mostrar header/footer de sitio completo. */
+  chrome?: boolean;
+  /** Emitir enlaces hreflang (páginas con equivalente en el otro idioma). */
+  alternates?: boolean;
+  noindex?: boolean;
+  /** Ruta (desde la raíz del sitio) de la imagen OG 1200x630. Por defecto /og/default-{lang}.png */
+  ogImage?: string;
+}
+
+const { lang, title, description, chrome = true, alternates = true, noindex = false, ogImage } = Astro.props;
+
+const site = Astro.site!;
+const pathname = Astro.url.pathname;
+const fullTitle = title ? `${title} · Iván Salas` : t(lang, 'site.name');
+const desc = description ?? t(lang, 'site.description');
+const canonical = new URL(pathname, site).href;
+const ogUrl = new URL(withBase(ogImage ?? `/og/default-${lang}.png`), site).href;
+const isHome = pathname === localePath(lang);
+const sameAs = [GITHUB_URL, LINKEDIN_URL].filter(Boolean);
+const siteId = new URL(withBase('/#website'), site).href;
+const personId = new URL(withBase('/#person'), site).href;
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': siteId,
+    url: new URL(localePath(lang), site).href,
+    name: 'Iván Salas',
+    inLanguage: OG_LOCALE[lang].replace('_', '-'),
+    publisher: { '@id': personId },
+  },
+  ...(isHome
+    ? [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Person',
+          '@id': personId,
+          name: NAME,
+          jobTitle: lang === 'es' ? 'Desarrollador Full Stack' : 'Full Stack Developer',
+          url: new URL(localePath(lang), site).href,
+          email: `mailto:${EMAIL}`,
+          sameAs,
+          alumniOf: { '@type': 'CollegeOrUniversity', name: 'Universidad del Bío-Bío' },
+          knowsAbout: ['REST APIs', 'PostgreSQL', 'PostGIS', 'Redis', 'Docker', 'CI/CD', 'TypeScript'],
+        },
+      ]
+    : []),
+];
+const swap = (l: Lang) => new URL(swapLangPath(pathname, l), site).href;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={desc} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
+    <link rel="apple-touch-icon" href={withBase('/apple-touch-icon.png')} />
+    <link rel="manifest" href={withBase('/manifest.webmanifest')} />
+    <link rel="preload" href={pixelify700} as="font" type="font/woff2" crossorigin />
+    <meta name="theme-color" content="#1a1c2c" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#eef1f7" media="(prefers-color-scheme: light)" />
+    {noindex && <meta name="robots" content="noindex" />}
+    {
+      alternates && (
+        <>
+          {LOCALES.map((l) => (
+            <link rel="alternate" hreflang={l} href={swap(l)} />
+          ))}
+          <link rel="alternate" hreflang="x-default" href={swap('es')} />
+        </>
+      )
+    }
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Iván Salas" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={OG_LOCALE[lang]} />
+    {alternates && <meta property="og:locale:alternate" content={OG_LOCALE[otherLang(lang)]} />}
+    <meta property="og:image" content={ogUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={fullTitle} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={ogUrl} />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={desc} />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} is:inline></script>
+
+    <!-- Aplica el tema antes del primer pintado para evitar parpadeo -->
+    <script is:inline>
+      (function () {
+        var theme;
+        try {
+          theme = localStorage.getItem('theme');
+        } catch (e) {}
+        if (theme !== 'light' && theme !== 'dark') {
+          theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{t(lang, 'skip')}</a>
+    {chrome && <Header lang={lang} />}
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    {chrome && <Footer lang={lang} />}
+  </body>
+</html>

@@ -1,0 +1,22 @@
+---
+import { t, type Lang } from '../i18n/utils';
+
+interface Props {
+  href: string;
+  lang: Lang;
+  variant?: 'primary' | 'default';
+  external?: boolean;
+  class?: string;
+}
+const { href, lang, variant = 'default', external = false, class: className = '' } = Astro.props;
+const cls = ['px-btn', variant === 'primary' ? 'px-btn-primary' : '', className].filter(Boolean).join(' ');
+---
+
+<a
+  href={href}
+  class={cls}
+  {...external ? { target: '_blank', rel: 'noopener noreferrer' } : {}}
+>
+  <slot />
+  {external && <span class="sr-only-text">{t(lang, 'common.external')}</span>}
+</a>
