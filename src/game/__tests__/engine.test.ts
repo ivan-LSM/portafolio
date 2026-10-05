@@ -6,7 +6,17 @@ import {
   DEMPSEY_MULT,
   EVENT_DEFS,
   CAFE_DURATION_MS,
+  CLICK_PROD_SHARE,
   CV_COST_SECONDS,
+  CV_RESOLVE_MAX_MS,
+  CV_RESOLVE_MIN_MS,
+  P_INTERVIEW_BASE,
+  PRESTIGE_P_INTERVIEW,
+  PRESTIGE_PROD_BONUS,
+  LINKEDIN_P_INTERVIEW,
+  PORTAFOLIO_P_INTERVIEW,
+  TECLADO_CLICK_MULT,
+  UDEMY_CLICK_MULT,
   CV_MIN_COST,
   OUTBOX_BASE,
   OUTBOX_LINKEDIN,
@@ -22,6 +32,8 @@ import {
 } from '../balance';
 import {
   applyOffline,
+  baseClick,
+  baseProduction,
   buy,
   cafeIsBarrel,
   canBuy,
@@ -121,16 +133,16 @@ describe('costos', () => {
 });
 
 describe('clicks y producción', () => {
-  it('multiplicadores de click: udemy x2, teclado x3, café x3', () => {
+  it('multiplicadores de click: udemy, teclado y café multiplican el click', () => {
     const s = richState();
     expect(clickValue(s)).toBe(1);
     buy(s, 'udemy');
-    expect(clickValue(s)).toBe(2);
+    expect(clickValue(s)).toBe(UDEMY_CLICK_MULT);
     buy(s, 'teclado');
-    expect(clickValue(s)).toBe(6);
+    expect(clickValue(s)).toBe(UDEMY_CLICK_MULT * TECLADO_CLICK_MULT);
     buy(s, 'cafe');
-    expect(clickValue(s)).toBe(18);
-    expect(click(s)).toBe(18);
+    expect(clickValue(s)).toBe(UDEMY_CLICK_MULT * TECLADO_CLICK_MULT * 3);
+    expect(click(s)).toBe(UDEMY_CLICK_MULT * TECLADO_CLICK_MULT * 3);
     expect(s.clicks).toBe(1);
   });
 
@@ -148,15 +160,38 @@ describe('clicks y producción', () => {
     s.owned.yolo = 2; // 1 cps
     s.copilotLevel = 1; // 2 clicks/s
     tick(s, 1000, rng());
-    expect(s.commits).toBeCloseTo(1 + 2, 5);
+    expect(s.commits).toBeCloseTo(1 + 2 * (1 + CLICK_PROD_SHARE * 1), 5); // el click vale 1 + CLICK_PROD_SHARE de 1 c/s
   });
 
-  it('el prestigio aplica +25% por nivel', () => {
+  it('el prestigio aplica su bono de producción por nivel', () => {
     const s = createState();
     s.owned.yolo = 2;
     s.prestige = 2;
-    expect(productionPerSec(s)).toBeCloseTo(1 * 1.5);
-    expect(clickValue(s)).toBeCloseTo(1.5);
+    const mult = 1 + PRESTIGE_PROD_BONUS * 2;
+    expect(productionPerSec(s)).toBeCloseTo(1 * mult);
+    expect(clickValue(s)).toBeCloseTo((1 + CLICK_PROD_SHARE * 1) * mult);
+  });
+
+  it('el click suma una parte de la producción permanente y el café lo multiplica completo', () => {
+    const s = richState();
+    s.owned.yolo = 20; // 10 cps
+    const base = 1 + CLICK_PROD_SHARE * 10;
+    expect(clickValue(s)).toBeCloseTo(base);
+    expect(baseClick(s)).toBeCloseTo(base);
+    buy(s, 'cafe');
+    expect(clickValue(s)).toBeCloseTo(base * 3);
+    expect(baseClick(s)).toBeCloseTo(base); // el café no entra en la base
+    expect(baseProduction(s)).toBeCloseTo(10);
+  });
+
+  it('cvRate incluye el autoclick con el click de base', () => {
+    const s = createState();
+    s.owned.yolo = 20; // 10 cps
+    s.copilotLevel = 1; // 2 clicks/s
+    const expected = 10 + 2 * (1 + CLICK_PROD_SHARE * 10);
+    expect(cvRate(s)).toBeCloseTo(expected);
+    s.cafeActive = 10_000;
+    expect(cvRate(s)).toBeCloseTo(expected); // sin café
   });
 });
 
@@ -186,7 +221,7 @@ describe('café', () => {
 });
 
 describe('CVs', () => {
-  it('sendCVs descuenta commits y deja CVs en revisión de 3 a 8 s', () => {
+  it('sendCVs descuenta commits y deja CVs en revisión según el rango de resolución', () => {
     const s = richState();
     const before = s.commits;
     const n = sendCVs(s, 10, rng());
@@ -194,8 +229,8 @@ describe('CVs', () => {
     expect(before - s.commits).toBeCloseTo(cvCostFor({ ...s, cvsSent: 0 }, 10));
     expect(s.pending).toHaveLength(10);
     for (const cv of s.pending) {
-      expect(cv.left).toBeGreaterThanOrEqual(3000);
-      expect(cv.left).toBeLessThanOrEqual(8000);
+      expect(cv.left).toBeGreaterThanOrEqual(CV_RESOLVE_MIN_MS);
+      expect(cv.left).toBeLessThanOrEqual(CV_RESOLVE_MAX_MS);
     }
   });
 
@@ -255,27 +290,29 @@ describe('CVs', () => {
     expect(cvSendBlock(s, 1)).toEqual({ reason: 'event', id: 'junior5', left: 12_000 });
   });
 
-  it('distribución de resultados: 12% entrevista, 40% del resto rechazo', () => {
+  it('distribución de resultados: P_INTERVIEW_BASE entrevista, 40% del resto rechazo', () => {
     const s = createState();
     const r = mulberry32(7);
     const N = 40000;
     const c = { interview: 0, reject: 0, ghost: 0 };
     for (let i = 0; i < N; i++) c[rollCV(s, false, r)]++;
-    expect(c.interview / N).toBeCloseTo(0.12, 1);
-    expect(c.reject / N).toBeCloseTo(0.88 * 0.4, 1);
-    expect(c.ghost / N).toBeCloseTo(0.88 * 0.6, 1);
-    expect(Math.abs(c.interview / N - 0.12)).toBeLessThan(0.01);
-    expect(Math.abs(c.reject / N - 0.352)).toBeLessThan(0.01);
+    const pi = P_INTERVIEW_BASE;
+    expect(c.interview / N).toBeCloseTo(pi, 1);
+    expect(c.reject / N).toBeCloseTo((1 - pi) * 0.4, 1);
+    expect(c.ghost / N).toBeCloseTo((1 - pi) * 0.6, 1);
+    expect(Math.abs(c.interview / N - pi)).toBeLessThan(0.01);
+    expect(Math.abs(c.reject / N - (1 - pi) * 0.4)).toBeLessThan(0.01);
   });
 
   it('la probabilidad de entrevista suma bonos y tiene tope 0.60', () => {
     const s = createState();
-    expect(pInterview(s)).toBeCloseTo(0.12);
+    expect(pInterview(s)).toBeCloseTo(P_INTERVIEW_BASE);
     s.upgrades.linkedin = true;
     s.upgrades.portafolio = true;
-    expect(pInterview(s)).toBeCloseTo(0.32);
+    const withUpgrades = P_INTERVIEW_BASE + LINKEDIN_P_INTERVIEW + PORTAFOLIO_P_INTERVIEW;
+    expect(pInterview(s)).toBeCloseTo(withUpgrades);
     s.prestige = 4;
-    expect(pInterview(s)).toBeCloseTo(0.44);
+    expect(pInterview(s)).toBeCloseTo(withUpgrades + 4 * PRESTIGE_P_INTERVIEW);
     s.prestige = 100;
     expect(pInterview(s)).toBe(P_INTERVIEW_CAP);
   });
@@ -333,15 +370,15 @@ describe('sin soft-lock', () => {
     expect(sendCVs(s, 1, rng())).toBe(1);
   });
 
-  it('con 80k commits y todas las mejoras se envían al menos 10 CVs, sin importar los CVs enviados', () => {
+  it('con 120k commits y todas las mejoras se envían al menos 10 CVs, sin importar los CVs enviados', () => {
     const s = createState();
-    s.commits = 80_000;
-    s.totalCommits = 80_000;
+    s.commits = 120_000;
+    s.totalCommits = 120_000;
     s.cvsSent = 500;
     for (const id of ['udemy', 'teclado', 'bootcamp', 'linkedin', 'referido'] as const) s.upgrades[id] = true;
     s.copilotLevel = 5;
     s.owned = { yolo: 20, reservas: 15, gymubb: 10, sigespu: 5, pedidos: 2 };
-    const expected = Math.min(outboxCap(s), Math.floor(80_000 / cvCost(s)));
+    const expected = Math.min(outboxCap(s), Math.floor(120_000 / cvCost(s)));
     expect(expected).toBeGreaterThanOrEqual(10);
     expect(sendCVs(s, 'max', rng())).toBe(expected);
   });
@@ -421,8 +458,8 @@ describe('prestigio', () => {
     expect(s.upgrades.udemy).toBe(false);
     expect(s.commits).toBe(0);
     expect(s.achievements).toContain('firstCommit');
-    expect(pInterview(s)).toBeCloseTo(0.15);
-    expect(clickValue(s)).toBeCloseTo(1.25);
+    expect(pInterview(s)).toBeCloseTo(P_INTERVIEW_BASE + PRESTIGE_P_INTERVIEW);
+    expect(clickValue(s)).toBeCloseTo(1 + PRESTIGE_PROD_BONUS);
   });
 
   it('llegar a CTO da logro y no permite más prestigio', () => {

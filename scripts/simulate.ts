@@ -4,7 +4,7 @@
  *
  *   npx tsx scripts/simulate.ts [N]
  *
- * El bot: 5 clicks/s, acepta al recruiter, compra por mejor ROI (payback bajo el
+ * El bot: 5 clicks/s (CPS=3 simula un ritmo humano), acepta al recruiter, compra por mejor ROI (payback bajo el
  * umbral), usa café cuando es barato, y gasta el resto en CVs.
  *
  * Política del proceso final: el 50 % de las semillas (las pares) lo intenta apenas junta
@@ -42,7 +42,7 @@ import { cvsBlocked } from '../src/game/events';
 import { mulberry32 } from '../src/game/rng';
 import type { GameState } from '../src/game/types';
 
-const CLICKS_PER_SEC = 5;
+const CLICKS_PER_SEC = Number(process.env.CPS ?? 5);
 /** Factor sobre el tiempo restante hasta poder pagar los CVs necesarios: se invierte si el payback es menor. */
 const HORIZON = Number(process.env.HORIZON ?? 1);
 const MAX_MS = 40 * 60 * 1000;
@@ -113,11 +113,16 @@ export function runBot(seed: number, early = false): BotResult {
   let unableRun = 0;
   let longestUnableMs = 0;
   let triedEarly = false;
-  const clickEvery = Math.round(1000 / CLICKS_PER_SEC / TICK_MS);
+  const clicksPerTick = (CLICKS_PER_SEC * TICK_MS) / 1000;
+  let clickAcc = 0;
   const res = (time: number | null): BotResult => ({ time, stuckMs, longestUnableMs, fails: s.finalFails, early });
   while (t < MAX_MS) {
     n++;
-    if (n % clickEvery === 0) click(s);
+    clickAcc += clicksPerTick;
+    while (clickAcc >= 1) {
+      click(s);
+      clickAcc -= 1;
+    }
     s.outbox.length = 0;
     acceptRecruiter(s);
     const earlyPhase = early && !triedEarly && s.finalFails === 0;

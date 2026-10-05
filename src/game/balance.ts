@@ -32,15 +32,17 @@ export const COST_GROWTH = 1.15;
 export const UNLOCK_FRACTION = 0.5;
 
 export const CLICK_BASE = 1;
-export const UDEMY_COST = 50;
-export const UDEMY_CLICK_MULT = 2;
+/** Cada click suma además esta fracción de la producción permanente por segundo (proyectos + bootcamp, sin café, eventos ni prestigio). */
+export const CLICK_PROD_SHARE = 0.2; // TUNED (simulador, CPS=3)
+export const UDEMY_COST = 30; // TUNED
+export const UDEMY_CLICK_MULT = 3; // TUNED
 export const COPILOT_BASE_COST = 500;
 export const COPILOT_COST_GROWTH = 4;
 export const COPILOT_MAX_LEVEL = 5;
 export const COPILOT_CPS_PER_LEVEL = 2;
 export const BOOTCAMP_COST = 2000;
 export const BOOTCAMP_PROD_MULT = 2;
-export const TECLADO_COST = 8000;
+export const TECLADO_COST = 3000; // TUNED
 export const TECLADO_CLICK_MULT = 3;
 
 export const CAFE_BASE_COST = 30;
@@ -53,15 +55,15 @@ export const CAFE_COOLDOWN_MS = 60_000;
 // CVs
 /** Costo de un CV: max(CV_MIN_COST, CV_COST_SECONDS * commits/s); no depende de cuántos CVs se enviaron. */
 export const CV_MIN_COST = 25;
-export const CV_COST_SECONDS = 2.5; // TUNED (simulador)
+export const CV_COST_SECONDS = 2; // TUNED (simulador)
 /** Bandeja de salida: máximo de CVs «en revisión» a la vez. */
 export const OUTBOX_BASE = 10;
 export const OUTBOX_LINKEDIN = 5;
 export const OUTBOX_REFERIDO = 5;
 export const OUTBOX_PER_PRESTIGE = 5;
-export const CV_RESOLVE_MIN_MS = 3000;
-export const CV_RESOLVE_MAX_MS = 8000;
-export const P_INTERVIEW_BASE = 0.12;
+export const CV_RESOLVE_MIN_MS = 2000; // TUNED
+export const CV_RESOLVE_MAX_MS = 5000; // TUNED
+export const P_INTERVIEW_BASE = 0.15; // TUNED
 export const P_INTERVIEW_CAP = 0.6;
 /** Del resto (1 - pEntrevista), esta fracción es rechazo y el resto ghosting. */
 export const REJECT_SHARE = 0.4;
@@ -134,6 +136,6 @@ export const ARROW_CLICKS = 15;
 export const TUTORIAL_STEPS = 3;
 export const OFFLINE_RATE = 0.5;
 export const OFFLINE_MAX_MS = 2 * 60 * 60 * 1000;
-export const SPEEDRUN_MS = 6 * 60 * 1000;
+export const SPEEDRUN_MS = 3.5 * 60 * 1000; // TUNED: la partida humana ronda los 4.3 min
 
 export const TICK_MS = 100;

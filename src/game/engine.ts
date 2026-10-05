@@ -9,6 +9,7 @@ import {
   BARREL_AFTER_CAFES,
   CAFE_MULT,
   CLICK_BASE,
+  CLICK_PROD_SHARE,
   COPILOT_BASE_COST,
   COPILOT_COST_GROWTH,
   COPILOT_CPS_PER_LEVEL,
@@ -128,10 +129,24 @@ export function prestigeMult(s: GameState): number {
   return 1 + PRESTIGE_PROD_BONUS * s.prestige;
 }
 
-export function clickValue(s: GameState): number {
+/** Producción permanente por segundo: proyectos y bootcamp, sin café, eventos ni prestigio. */
+export function baseProduction(s: GameState): number {
+  let base = 0;
+  for (const p of PROJECTS) base += s.owned[p.id] * p.cps;
+  if (s.upgrades.bootcamp) base *= BOOTCAMP_PROD_MULT;
+  return base;
+}
+
+/** Valor «de base» de un click: base x mejoras + parte de la producción permanente. Sin café, dempsey ni prestigio. */
+export function baseClick(s: GameState): number {
   let v = CLICK_BASE;
   if (s.upgrades.udemy) v *= UDEMY_CLICK_MULT;
   if (s.upgrades.teclado) v *= TECLADO_CLICK_MULT;
+  return v + CLICK_PROD_SHARE * baseProduction(s);
+}
+
+export function clickValue(s: GameState): number {
+  let v = baseClick(s);
   if (s.cafeActive > 0) v *= CAFE_MULT;
   if (s.dempseyLeft > 0) v *= DEMPSEY_MULT;
   return v * prestigeMult(s);
@@ -143,9 +158,7 @@ export function autoClicksPerSec(s: GameState): number {
 }
 
 export function productionPerSec(s: GameState): number {
-  let base = 0;
-  for (const p of PROJECTS) base += s.owned[p.id] * p.cps;
-  if (s.upgrades.bootcamp) base *= BOOTCAMP_PROD_MULT;
+  let base = baseProduction(s);
   if (s.cafeActive > 0) base *= CAFE_MULT;
   return base * prestigeMult(s) * eventProdMult(s);
 }
@@ -183,13 +196,7 @@ export function cafeCost(s: GameState): number {
  * sin café ni eventos (así beber café no encarece los CVs).
  */
 export function cvRate(s: GameState): number {
-  let prod = 0;
-  for (const p of PROJECTS) prod += s.owned[p.id] * p.cps;
-  if (s.upgrades.bootcamp) prod *= BOOTCAMP_PROD_MULT;
-  let click = CLICK_BASE;
-  if (s.upgrades.udemy) click *= UDEMY_CLICK_MULT;
-  if (s.upgrades.teclado) click *= TECLADO_CLICK_MULT;
-  return (prod + autoClicksPerSec(s) * click) * prestigeMult(s);
+  return (baseProduction(s) + autoClicksPerSec(s) * baseClick(s)) * prestigeMult(s);
 }
 
 /** Costo de un CV: max(mínimo, segundos * commits/s). No depende de cuántos CVs se enviaron. */
