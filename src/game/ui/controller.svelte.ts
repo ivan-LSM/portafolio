@@ -25,6 +25,7 @@ import { localePath } from '../../i18n/utils';
 import { clearStorage, exportSave, importSave, loadFromStorage, saveToStorage } from '../save';
 import type { GameState, OutMsg } from '../types';
 import { sfx, type SfxName } from '../../lib/sfx';
+import { track, trackOnce } from '../../lib/analytics';
 import { cardFileName, copyShareText, displayUrl, pickQuip, shareCard, type CardData } from './shareCard';
 import { KEYBOARD, LAYOUT } from '../sprites';
 import {
@@ -263,6 +264,7 @@ export class GameController {
     const v = engineClick(this.s, nowMs);
     this.lastClickAt = nowMs;
     sfx.play('click');
+    trackOnce('juego-inicio');
     this.bumpCombo(fast);
     this.keyFrame = this.keyFrame === 1 ? 2 : 1;
     this.typingFrame = this.typingFrame ? 0 : 1;
@@ -414,6 +416,7 @@ export class GameController {
     sfx.play('fail');
     setTimeout(() => {
       if (enginePrestige(this.s)) {
+        track('juego-prestigio');
         this.feed = [];
         this.banner = null;
         sfx.play('achievement');
@@ -549,6 +552,7 @@ export class GameController {
   /** Comparte la tarjeta (Web Share con imagen o descarga + texto) y avisa con un toast. */
   async shareResultCard(): Promise<void> {
     const out = await shareCard(this.cardData(), this.shareText(), cardFileName(this.lang), this.t('title'));
+    if (out === 'shared' || out === 'downloaded') track('juego-compartir');
     const key = out === 'shared' ? 'end.shareDone' : out === 'downloaded' ? 'end.shareDownloaded' : out === 'textOnly' ? 'end.shareTextOnly' : out === 'failed' ? 'end.shareFail' : '';
     if (key) this.pushToast(this.t(key), 'info');
   }
@@ -692,6 +696,7 @@ export class GameController {
           this.pushToast(t('toast.offerExtra', { n: this.s.offers }), 'achv');
           this.celebrate();
         } else if (m.success) {
+          track('juego-oferta');
           sounds.add('success');
           this.celebrate();
           // el logro de speedrun se evalúa tras terminar

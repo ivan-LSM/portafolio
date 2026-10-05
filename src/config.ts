@@ -13,3 +13,6 @@ export const LINKEDIN_URL = 'https://www.linkedin.com/in/iv%C3%A1n-salas-molina'
  */
 export const SHOW_CV = true;
 export const CV_PATH = '/cv/ivan-salas-cv.pdf';
+
+/** Código del sitio en GoatCounter (https://<código>.goatcounter.com). Vacío desactiva la analítica. */
+export const GOATCOUNTER_CODE = 'ivan-lsm';

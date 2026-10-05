@@ -80,6 +80,7 @@
   "contact.github": "GitHub",
   "contact.linkedin": "LinkedIn",
   "footer.built": "Hecho con Astro, Tailwind y mucho píxel.",
+  "footer.analytics": "Analítica anónima y sin cookies con GoatCounter.",
   "notfound.title": "404 — Página no encontrada",
   "notfound.text": "Este nivel no existe. Vuelve al inicio para seguir jugando.",
   "notfound.home": "Volver al inicio",

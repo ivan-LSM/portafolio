@@ -7,14 +7,17 @@ interface Props {
   variant?: 'primary' | 'default';
   external?: boolean;
   class?: string;
+  /** Nombre del evento de GoatCounter al hacer click (data-goatcounter-click). */
+  track?: string;
 }
-const { href, lang, variant = 'default', external = false, class: className = '' } = Astro.props;
+const { href, lang, variant = 'default', external = false, class: className = '', track } = Astro.props;
 const cls = ['px-btn', variant === 'primary' ? 'px-btn-primary' : '', className].filter(Boolean).join(' ');
 ---
 
 <a
   href={href}
   class={cls}
+  data-goatcounter-click={track}
   {...external ? { target: '_blank', rel: 'noopener noreferrer' } : {}}
 >
   <slot />

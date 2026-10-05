@@ -124,13 +124,13 @@ const experience = [
       <strong class="break-all">{EMAIL}</strong>
     </p>
     <div class="flex flex-wrap gap-4">
-      <a class="px-btn px-btn-primary" href={`mailto:${EMAIL}`}>{t(lang, 'contact.send')}</a>
-      <a class="px-btn" href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
+      <a class="px-btn px-btn-primary" href={`mailto:${EMAIL}`} data-goatcounter-click="contacto-email">{t(lang, 'contact.send')}</a>
+      <a class="px-btn" href={GITHUB_URL} target="_blank" rel="noopener noreferrer" data-goatcounter-click="contacto-github">
         {t(lang, 'contact.github')}<span class="sr-only-text">{t(lang, 'common.external')}</span>
       </a>
       {
         LINKEDIN_URL && (
-          <a class="px-btn" href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">
+          <a class="px-btn" href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer" data-goatcounter-click="contacto-linkedin">
             {t(lang, 'contact.linkedin')}<span class="sr-only-text">{t(lang, 'common.external')}</span>
           </a>
         )

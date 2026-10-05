@@ -1,5 +1,5 @@
 ---
-import { GITHUB_URL, LINKEDIN_URL, NAME } from '../config';
+import { GITHUB_URL, GOATCOUNTER_CODE, LINKEDIN_URL, NAME } from '../config';
 import { t, type Lang } from '../i18n/utils';
 
 interface Props {
@@ -11,10 +11,13 @@ const year = new Date().getFullYear();
 
 <footer class="mt-24 border-t-4 border-[var(--border)] bg-[var(--bg-alt)] py-8">
   <div class="container-px flex flex-wrap items-center justify-between gap-4 text-[var(--muted)]">
-    <p class="m-0">© {year} {NAME}. {t(lang, 'footer.built')}</p>
+    <div>
+      <p class="m-0">© {year} {NAME}. {t(lang, 'footer.built')}</p>
+      {GOATCOUNTER_CODE && <p class="m-0 mt-1 text-sm">{t(lang, 'footer.analytics')}</p>}
+    </div>
     <ul class="m-0 flex list-none gap-5 p-0 font-pixel text-lg">
-      <li><a href={GITHUB_URL} rel="noopener noreferrer">GitHub</a></li>
-      {LINKEDIN_URL && <li><a href={LINKEDIN_URL} rel="noopener noreferrer">LinkedIn</a></li>}
+      <li><a href={GITHUB_URL} rel="noopener noreferrer" data-goatcounter-click="footer-github">GitHub</a></li>
+      {LINKEDIN_URL && <li><a href={LINKEDIN_URL} rel="noopener noreferrer" data-goatcounter-click="footer-linkedin">LinkedIn</a></li>}
     </ul>
   </div>
 </footer>

@@ -23,7 +23,7 @@ const home = localePath(lang);
         <PixelButton href={`${home}#projects`} lang={lang} variant="primary">{t(lang, 'hero.cta.projects')}</PixelButton>
         <PixelButton href={`${home}#contact`} lang={lang}>{t(lang, 'hero.cta.contact')}</PixelButton>
         <PixelButton href={GITHUB_URL} lang={lang} external>{t(lang, 'hero.github')}</PixelButton>
-        {SHOW_CV && <PixelButton href={withBase(CV_PATH)} lang={lang}>{t(lang, 'hero.cta.cv')}</PixelButton>}
+        {SHOW_CV && <PixelButton href={withBase(CV_PATH)} lang={lang} track="cv-descarga">{t(lang, 'hero.cta.cv')}</PixelButton>}
       </div>
     </div>
 
